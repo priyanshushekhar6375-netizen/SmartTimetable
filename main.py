@@ -51,6 +51,21 @@ def resolve_db_path() -> Path:
         p = Path(env_path).resolve()
         if p.exists() or p.parent.exists():
             return p
+
+    # In serverless environments (like Vercel or AWS Lambda), the filesystem is read-only
+    # except for /tmp. Copy the bundled seed database to /tmp if it doesn't already exist.
+    is_serverless = bool(os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
+    if is_serverless:
+        tmp_db = Path("/tmp/timetable.db")
+        bundled_db = Path(__file__).resolve().parent / "timetable.db"
+        if not tmp_db.exists() and bundled_db.exists():
+            try:
+                import shutil
+                shutil.copyfile(bundled_db, tmp_db)
+            except Exception as e:
+                print(f"Warning: could not copy seed db to /tmp: {e}")
+        return tmp_db
+
     script_db = Path(__file__).resolve().parent / "timetable.db"
     if script_db.exists():
         return script_db
@@ -85,15 +100,41 @@ def verify_password(password: str, salt: str, password_hash: str) -> bool:
 
 ACTIVE_SESSIONS: Dict[str, Dict[str, Any]] = {}
 SESSION_DURATION_SECONDS = 24 * 3600
+SESSION_SECRET = os.environ.get("SESSION_SECRET", "timeoptima-secure-session-key-fallback-2026")
 
 def create_session(username: str, role: str = "admin") -> str:
-    token = secrets.token_urlsafe(32)
+    import base64
+    expires_at = int(time.time() + SESSION_DURATION_SECONDS)
+    payload = f"{username}|{role}|{expires_at}"
+    sig = hmac.new(SESSION_SECRET.encode("utf-8"), payload.encode("utf-8"), hashlib.sha256).hexdigest()
+    raw = f"{payload}|{sig}".encode("utf-8")
+    token = base64.urlsafe_b64encode(raw).decode("utf-8").rstrip("=")
     ACTIVE_SESSIONS[token] = {
         "username": username,
         "role": role,
-        "expires_at": time.time() + SESSION_DURATION_SECONDS
+        "expires_at": expires_at
     }
     return token
+
+def verify_stateless_session(token_str: str) -> Optional[Dict[str, Any]]:
+    try:
+        import base64
+        padded = token_str + "=" * (-len(token_str) % 4)
+        raw = base64.urlsafe_b64decode(padded.encode("utf-8")).decode("utf-8")
+        parts = raw.split("|")
+        if len(parts) != 4:
+            return None
+        username, role, expires_at_str, sig = parts
+        expires_at = int(expires_at_str)
+        payload = f"{username}|{role}|{expires_at_str}"
+        expected_sig = hmac.new(SESSION_SECRET.encode("utf-8"), payload.encode("utf-8"), hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(sig, expected_sig):
+            return None
+        if time.time() > expires_at:
+            return None
+        return {"username": username, "role": role, "expires_at": expires_at}
+    except Exception:
+        return None
 
 security = HTTPBearer(auto_error=False)
 
@@ -106,6 +147,10 @@ def get_current_user(credentials: Optional[HTTPAuthorizationCredentials] = Depen
         )
     token = credentials.credentials.strip()
     sess = ACTIVE_SESSIONS.get(token)
+    if not sess:
+        sess = verify_stateless_session(token)
+        if sess:
+            ACTIVE_SESSIONS[token] = sess
     if not sess:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
