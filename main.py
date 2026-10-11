@@ -2381,6 +2381,23 @@ def generate_timetable(weights: Weights, current_user: Dict[str, Any] = Depends(
 
     return res
 
+# ==============================================================================
+# Dual Route Registration (/api/* and /* equivalence)
+# ==============================================================================
+existing_paths = {r.path for r in app.routes if hasattr(r, "path")}
+for r in list(app.routes):
+    if hasattr(r, "path") and hasattr(r, "endpoint"):
+        if r.path.startswith("/api/"):
+            bare = r.path[4:]
+            if bare not in existing_paths:
+                app.add_api_route(bare, r.endpoint, methods=r.methods, response_model=getattr(r, "response_model", None))
+                existing_paths.add(bare)
+        elif not r.path.startswith("/api") and r.path not in ("/", "/index.html", "/style.css", "/script.js", "/openapi.json", "/docs", "/redoc"):
+            with_api = "/api" + r.path
+            if with_api not in existing_paths:
+                app.add_api_route(with_api, r.endpoint, methods=r.methods, response_model=getattr(r, "response_model", None))
+                existing_paths.add(with_api)
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
