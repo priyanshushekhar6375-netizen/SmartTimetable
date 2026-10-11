@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Timetable & Resource Optimizer</title>
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Clean External Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ====================================================================== -->
+    <!-- AUTHENTICATION VIEW                                                     -->
+    <!-- ======================================================================= -->
+    <section id="login" class="login">
+        <div class="login-card">
+            <div style="text-align:center;margin-bottom:18px">
+                <i class="fa-solid fa-calendar-check" style="font-size: 2.8rem; color: var(--p);"></i>
+            </div>
+            <h2>TimeOptima</h2>
+            <p class="sub">College Resource & Timetable Optimizer</p>
+            
+            <form id="loginForm" onsubmit="event.preventDefault();">
+                <label for="username">College ID / Email</label>
+                <input id="username" type="text" placeholder="admin@college.edu" value="admin@college.edu" required>
+                
+                <label for="password">Password</label>
+                <input id="password" type="password" placeholder="••••••••" value="password123" required>
+                
+                <button type="submit" class="primary" style="width:100%;margin-top:20px">
+                    <i class="fa-solid fa-right-to-bracket"></i> Login to Dashboard
+                </button>
+            </form>
+            
+            <div id="loginMsg"></div>
+        </div>
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- APPLICATION MAIN VIEW                                                   -->
+    <!-- ======================================================================= -->
+    <section id="app" class="app hidden">
+        <!-- Sidebar Navigation -->
+        <aside class="side" id="sideNav">
+            <div class="brand">
+                <i class="fa-solid fa-calendar-days" style="color: #60a5fa;"></i>
+                <span>TimeOptima</span>
+            </div>
+            
+            <nav class="nav">
+                <button data-page="dashboard" class="active">
+                    <i class="fa-solid fa-chart-pie"></i> Dashboard
+                </button>
+                <button data-page="data">
+                    <i class="fa-solid fa-database"></i> Data Entry
+                </button>
+                <button data-page="constraints">
+                    <i class="fa-solid fa-sliders"></i> Constraints
+                </button>
+                <button data-page="solver">
+                    <i class="fa-solid fa-microchip"></i> Run Solver
+                </button>
+                <button data-page="timetable">
+                    <i class="fa-solid fa-table-cells"></i> Final Timetable
+                </button>
+            </nav>
+            
+            <button class="logout" id="logout">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+            </button>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main>
+            <header class="top">
+                <div style="display:flex;align-items:center;gap:12px">
+                    <button class="mobile-toggle" onclick="toggleSidebar()" aria-label="Toggle Navigation">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h3 style="margin:0;font-size:1.15rem">Smart Timetable & Resource Optimizer</h3>
+                </div>
+                <div class="user-badge">
+                    <i class="fa-solid fa-user-shield" style="color: var(--p);"></i>
+                    <span>System Admin</span>
+                </div>
+            </header>
+
+            <div class="content">
+                
+                <!-- 1. DASHBOARD OVERVIEW -->
+                <div id="dashboard" class="page">
+                    <h2>College Overview</h2>
+                    <p class="sub">Summary of institutional capacity, resources, and timetable generation pipeline.</p>
+                    
+                    <div class="stats">
+                        <div class="stat">
+                            <span class="stat-label"><i class="fa-solid fa-chalkboard-user"></i> Teachers</span>
+                            <strong id="sTeachers">0</strong>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label"><i class="fa-solid fa-door-open"></i> Classrooms</span>
+                            <strong id="sRooms">0</strong>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label"><i class="fa-solid fa-flask-vial"></i> Laboratories</span>
+                            <strong id="sLabs">0</strong>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label"><i class="fa-solid fa-users-rectangle"></i> Sections</span>
+                            <strong id="sSections">0</strong>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label"><i class="fa-solid fa-book-open"></i> Subjects</span>
+                            <strong id="sSubjects">0</strong>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-label"><i class="fa-solid fa-clock"></i> Time Slots</span>
+                            <strong id="sTimeslots">0</strong>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>Optimization Pipeline Flow</h3>
+                        <p>1. <strong>Input Resources:</strong> Specify faculty workloads, room capacities, dynamic time slots, and sections.<br>
+                           2. <strong>Enforce Hard Constraints:</strong> Clashes, room capacities, break intervals, and weekly class counts are mathematically restricted.<br>
+                           3. <strong>OR-Tools CP-SAT Solver:</strong> Maximizes soft preferences (morning hours, compact schedules, balanced faculty load).<br>
+                           4. <strong>Automated Schedule:</strong> Displays structured timetable ready for PDF export and multi-dimensional filtering.</p>
+                        
+                        <div style="display:flex;gap:10px;margin-top:16px">
+                            <button class="primary" onclick="page('data')"><i class="fa-solid fa-plus"></i> Manage Data</button>
+                            <button class="secondary" onclick="page('solver')"><i class="fa-solid fa-play"></i> Run CP-SAT Solver</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. DATA ENTRY -->
+                <div id="data" class="page hidden">
+                    <h2>College Data Management</h2>
+                    <p class="sub">Configure active resources, faculty workload caps, time slots, and room capacities.</p>
+                    
+                    <div class="tabs">
+                        <button class="active" data-tab="teachers"><i class="fa-solid fa-chalkboard-user"></i> Teachers</button>
+                        <button data-tab="rooms"><i class="fa-solid fa-door-open"></i> Classrooms</button>
+                        <button data-tab="labs"><i class="fa-solid fa-flask-vial"></i> Labs</button>
+                        <button data-tab="sections"><i class="fa-solid fa-users-rectangle"></i> Sections</button>
+                        <button data-tab="subjects"><i class="fa-solid fa-book-open"></i> Subjects</button>
+                        <button data-tab="timeslots"><i class="fa-solid fa-clock"></i> Time Slots</button>
+                    </div>
+                    
+                    <div id="dataPanel"></div>
+                </div>
+
+                <!-- 3. CONSTRAINTS -->
+                <div id="constraints" class="page hidden">
+                    <h2>Solver Constraint Configuration</h2>
+                    <p class="sub">Configure CP-SAT hard satisfaction criteria and soft objective weights.</p>
+                    
+                    <div class="grid">
+                        <div class="card">
+                            <h3><i class="fa-solid fa-lock" style="color:var(--ok)"></i> Hard Constraints (Strict Enforced)</h3>
+                            <p>Hard constraints must be 100% satisfied for a timetable to be deemed feasible:</p>
+                            <ul style="list-style:none;padding:0;line-height:2;font-size:0.95rem">
+                                <li><i class="fa-solid fa-check" style="color:var(--ok)"></i> <strong>No Teacher Clashes:</strong> Faculty cannot teach > 1 class simultaneously.</li>
+                                <li><i class="fa-solid fa-check" style="color:var(--ok)"></i> <strong>No Section Clashes:</strong> Class sections cannot have overlapping periods.</li>
+                                <li><i class="fa-solid fa-check" style="color:var(--ok)"></i> <strong>No Room / Lab Overlaps:</strong> Physical rooms host at most 1 class per time slot.</li>
+                                <li><i class="fa-solid fa-check" style="color:var(--ok)"></i> <strong>Room Capacity Check:</strong> Room capacity must accommodate section strength.</li>
+                                <li><i class="fa-solid fa-check" style="color:var(--ok)"></i> <strong>Faculty & Room Availability:</strong> Respects configured availability days (Monday to Saturday).</li>
+                                <li><i class="fa-solid fa-check" style="color:var(--ok)"></i> <strong>Flexible Day-Wise & Period-Wise Scheduling:</strong> Specific activity days (e.g. Wednesday Library, Friday Lab) with automatic clash-free period selection.</li>
+                                <li><i class="fa-solid fa-check" style="color:var(--ok)"></i> <strong>Continuous Multi-Hour Classes:</strong> Multi-period subjects scheduled as consecutive uninterrupted blocks in the same room.</li>
+                                <li><i class="fa-solid fa-check" style="color:var(--ok)"></i> <strong>Resource Type Compatibility:</strong> Specific venue matching for Classrooms, Laboratories, and Central Library.</li>
+                                <li><i class="fa-solid fa-check" style="color:var(--ok)"></i> <strong>Weekly Requirement Fulfillment:</strong> All required weekly lectures/labs are placed.</li>
+                            </ul>
+                        </div>
+
+                        <div class="card">
+                            <h3><i class="fa-solid fa-sliders" style="color:var(--p)"></i> Soft Constraints (Objective Weights)</h3>
+                            <p>Adjust penalty and reward weights for solver CP-SAT objective optimization:</p>
+                            
+                            <div style="margin-bottom:16px">
+                                <div style="display:flex;justify-content:space-between;align-items:center">
+                                    <label for="morning" style="margin:0">Morning Period Preference (Early Teaching Slots)</label>
+                                    <span class="badge" id="morningVal">3</span>
+                                </div>
+                                <input id="morning" type="range" min="0" max="5" value="3" style="margin-top:6px">
+                            </div>
+
+                            <div style="margin-bottom:16px">
+                                <div style="display:flex;justify-content:space-between;align-items:center">
+                                    <label for="gaps" style="margin:0">Minimize Student Schedule Gaps</label>
+                                    <span class="badge" id="gapVal">2</span>
+                                </div>
+                                <input id="gaps" type="range" min="0" max="5" value="2" style="margin-top:6px">
+                            </div>
+
+                            <div style="margin-bottom:16px">
+                                <div style="display:flex;justify-content:space-between;align-items:center">
+                                    <label for="workload" style="margin:0">Balance Teacher Daily Workload</label>
+                                    <span class="badge" id="workVal">2</span>
+                                </div>
+                                <input id="workload" type="range" min="0" max="5" value="2" style="margin-top:6px">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. SOLVER RUNNER -->
+                <div id="solver" class="page hidden">
+                    <div class="card solver">
+                        <h2><i class="fa-solid fa-microchip" style="color:var(--p)"></i> Google OR-Tools CP-SAT Solver</h2>
+                        <p class="sub">Compiles your data and constraints into integer programming equations and calculates an optimal conflict-free schedule.</p>
+                        
+                        <div id="solverStatus" class="status">Ready to generate timetable.</div>
+                        
+                        <button id="generate" class="primary" style="padding:14px 28px;font-size:1.05rem">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Optimized Timetable
+                        </button>
+                        
+                        <div id="loading" class="hidden" style="margin-top:20px">
+                            <div class="spinner"></div>
+                            <p style="color:var(--p);font-weight:600">Executing constraint satisfaction engine on FastAPI backend...</p>
+                        </div>
+                        
+                        <div id="solverResult" style="margin-top:20px"></div>
+                    </div>
+                </div>
+
+                <!-- 5. FINAL TIMETABLE -->
+                <div id="timetable" class="page hidden">
+                    <div class="timetable-hero-card">
+                        <div class="timetable-header">
+                            <div>
+                                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+                                    <h2 style="margin:0"><i class="fa-solid fa-calendar-check" style="color:var(--p)"></i> Final Optimized Timetable</h2>
+                                    <div class="timetable-status-badges">
+                                        <span class="status-badge badge-optimized" title="OR-Tools Solver Global Objective Maximized">
+                                            <i class="fa-solid fa-wand-magic-sparkles"></i> AI Optimized
+                                        </span>
+                                        <span class="status-badge badge-conflict-free" title="Zero Teacher, Section, or Room Clashes">
+                                            <i class="fa-solid fa-shield-halved"></i> Conflict-Free
+                                        </span>
+                                        <span class="status-badge badge-cpsat" id="badgeCpsatVerified" title="Integer Programming Constraint Satisfaction Verified">
+                                            <i class="fa-solid fa-microchip"></i> CP-SAT Verified
+                                        </span>
+                                    </div>
+                                </div>
+                                <p class="sub" style="margin:0">Constraint-satisfaction verified weekly schedule with multi-dimensional filtering.</p>
+                            </div>
+                            <div class="action-group">
+                                <button class="btn-print-timetable secondary" onclick="window.print()" title="Print or Export Timetable as PDF">
+                                    <i class="fa-solid fa-print"></i> Print / Save PDF
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Live Schedule Summary Metrics Strip -->
+                        <div class="timetable-summary-strip" id="timetableSummaryStrip">
+                            <div class="summary-pill">
+                                <i class="fa-regular fa-clock pill-icon pill-icon-blue"></i>
+                                <div class="pill-data">
+                                    <span class="pill-value" id="ttSummarySlots">--</span>
+                                    <span class="pill-label">Daily Slots</span>
+                                </div>
+                            </div>
+                            <div class="summary-pill">
+                                <i class="fa-solid fa-book-open pill-icon pill-icon-indigo"></i>
+                                <div class="pill-data">
+                                    <span class="pill-value" id="ttSummaryTheory">--</span>
+                                    <span class="pill-label">Theory Classes</span>
+                                </div>
+                            </div>
+                            <div class="summary-pill">
+                                <i class="fa-solid fa-flask-vial pill-icon pill-icon-purple"></i>
+                                <div class="pill-data">
+                                    <span class="pill-value" id="ttSummaryLabs">--</span>
+                                    <span class="pill-label">Practical Labs</span>
+                                </div>
+                            </div>
+                            <div class="summary-pill">
+                                <i class="fa-solid fa-mug-hot pill-icon pill-icon-amber"></i>
+                                <div class="pill-data">
+                                    <span class="pill-value" id="ttSummaryBreaks">--</span>
+                                    <span class="pill-label">Break Periods</span>
+                                </div>
+                            </div>
+                            <div class="summary-pill">
+                                <i class="fa-solid fa-circle-check pill-icon pill-icon-emerald"></i>
+                                <div class="pill-data">
+                                    <span class="pill-value text-emerald" id="ttSummaryConflicts">0 Clashes</span>
+                                    <span class="pill-label">Hard Constraints</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modern Multi-View Filter Toolbar -->
+                        <!-- Modern Cascading Group Selector (Branch → Academic Year → Section) -->
+                        <div class="timetable-toolbar">
+                            <div class="cascading-hierarchy-bar">
+                                <div class="hierarchy-flow-title">
+                                    <i class="fa-solid fa-sitemap"></i>
+                                    <span>Branch <i class="fa-solid fa-arrow-right flow-sep"></i> Academic Year <i class="fa-solid fa-arrow-right flow-sep"></i> Section</span>
+                                </div>
+
+                                <div class="cascading-steps-wrap">
+                                    <!-- Step 1: Branch -->
+                                    <div class="cascading-step" id="filterBranchGroup">
+                                        <div class="step-badge">1</div>
+                                        <div class="step-field">
+                                            <label for="filterBranchSelect"><i class="fa-solid fa-code-branch"></i> Branch:</label>
+                                            <select id="filterBranchSelect" class="styled-select cascading-select" onchange="onBranchFilterChange()"></select>
+                                        </div>
+                                    </div>
+
+                                    <div class="cascading-divider"><i class="fa-solid fa-chevron-right"></i></div>
+
+                                    <!-- Step 2: Academic Year -->
+                                    <div class="cascading-step" id="filterYearGroup">
+                                        <div class="step-badge">2</div>
+                                        <div class="step-field">
+                                            <label for="filterYearSelect"><i class="fa-solid fa-graduation-cap"></i> Academic Year:</label>
+                                            <select id="filterYearSelect" class="styled-select cascading-select" onchange="onYearFilterChange()"></select>
+                                        </div>
+                                    </div>
+
+                                    <div class="cascading-divider"><i class="fa-solid fa-chevron-right"></i></div>
+
+                                    <!-- Step 3: Section -->
+                                    <div class="cascading-step" id="filterSectionGroup">
+                                        <div class="step-badge">3</div>
+                                        <div class="step-field">
+                                            <label for="filterSectionSelect"><i class="fa-solid fa-users-rectangle"></i> Section:</label>
+                                            <select id="filterSectionSelect" class="styled-select cascading-select" onchange="onSectionFilterChange()"></select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="toolbar-aux-actions">
+                                <button type="button" class="btn-all-timetables" id="btnAllTimetables" onclick="showAllTimetables()" title="View Master College-wide Timetable">
+                                    <i class="fa-solid fa-table-cells-large"></i> All Timetables
+                                </button>
+                                <div class="filter-control-item" id="filterTargetGroup" style="display:none">
+                                    <label for="filterTargetSelect" id="filterTargetLabel"><i class="fa-solid fa-filter"></i> Target:</label>
+                                    <select id="filterTargetSelect" class="styled-select styled-select-sm" onchange="onFilterTargetChange()"></select>
+                                </div>
+                                <div class="filter-control-item">
+                                    <label for="viewModeSelect" style="display:none">View Mode:</label>
+                                    <select id="viewModeSelect" class="styled-select styled-select-sm" onchange="onViewModeChange()" title="Switch View Mode">
+                                        <option value="section">Section View</option>
+                                        <option value="all">All Timetables</option>
+                                        <option value="teacher">Teacher-wise</option>
+                                        <option value="room">Room / Lab-wise</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Retain hidden sectionFilter element for backwards compatibility -->
+                            <select id="sectionFilter" style="display:none" onchange="filterTimetable()"><option value="all">All</option></select>
+                        </div>
+
+                        <!-- Active Timetable Scope Banner -->
+                        <div id="activeTimetableHeader" class="active-timetable-banner"></div>
+                    </div>
+
+                    <div id="timetableAlert"></div>
+
+                    <div class="timetable-card timetable-scroll-wrap" style="padding:0">
+                        <table class="timetable" id="table">
+                            <thead>
+                                <tr>
+                                    <th class="timetable-corner-header">Day / Time</th>
+                                    <!-- Dynamic Time Slot Headers injected by script.js -->
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+                    <!-- Post-Generation Period Fulfillment Validation Report -->
+                    <div id="validationReportSection" class="validation-report-card" style="display:none;margin-top:20px;">
+                        <div class="validation-report-header">
+                            <div class="validation-report-title">
+                                <i class="fa-solid fa-clipboard-check text-emerald" style="font-size:1.3rem;"></i>
+                                <div>
+                                    <h4 style="margin:0;font-size:1.05rem;font-weight:700;">Subject Period Fulfillment Audit</h4>
+                                    <span style="font-size:0.8rem;color:var(--muted)">Verified weekly periods vs generated timetable slots per subject</span>
+                                </div>
+                            </div>
+                            <div id="validationReportSummaryBadge" class="validation-summary-pill"></div>
+                        </div>
+                        <div class="validation-table-wrap">
+                            <table class="validation-table" id="validationReportTable">
+                                <thead>
+                                    <tr>
+                                        <th>Subject</th>
+                                        <th>Code</th>
+                                        <th>Teacher</th>
+                                        <th>Section</th>
+                                        <th>Duration</th>
+                                        <th style="text-align:center">Required Periods</th>
+                                        <th style="text-align:center">Generated Periods</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="validationReportTbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- CRUD MODAL (ADD & EDIT)                                                 -->
+    <!-- ======================================================================= -->
+    <div id="crudModal" class="modal-overlay" onclick="handleModalOverlayClick(event)">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="crudModalTitle">
+            <div class="modal-header">
+                <h3 class="modal-title" id="crudModalTitle">
+                    <i class="fa-solid fa-pen-to-square" style="color:var(--p)"></i>
+                    <span>Edit Item</span>
+                </h3>
+                <button type="button" class="modal-close" onclick="closeCrudModal()" aria-label="Close dialog">&times;</button>
+            </div>
+            
+            <div id="modalMsg"></div>
+            
+            <form id="crudModalForm" onsubmit="event.preventDefault(); handleModalSubmit(event); return false;">
+                <div id="modalFields" style="display:flex; flex-direction:column; gap:12px;"></div>
+                <div class="modal-actions">
+                    <button type="button" class="secondary" onclick="closeCrudModal()">Cancel</button>
+                    <button type="button" class="primary" id="modalSubmitBtn" onclick="handleModalSubmit(event)">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Clean External JavaScript Controller -->
+    <script src="script.js"></script>
+</body>
+</html>
