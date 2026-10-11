@@ -173,6 +173,7 @@ async function api(path, opts = {}) {
         headers["Authorization"] = `Bearer ${token}`;
     }
     const config = {
+        credentials: "include",
         ...opts,
         headers
     };
